@@ -8,9 +8,14 @@
         <div class="shadow-lg p-3 mb-5 bg-white rounded">
             <h3>Sample Data</h3>
             <div class="table-responsive">
+              {% if request.session.sample_query_error %}
+              <div class="alert alert-warning" role="alert">
+                  {{ request.session.sample_query_error }}
+              </div>
+              {% endif %}
                 <table class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
+                    <thead id="sample_table_header">
+                        <!-- <tr>
                             <th scope="col">id</th>
                             <th scope="col">longitude</th>
                             <th scope="col">latitude</th>
@@ -22,9 +27,9 @@
                             <th scope="col">median_income</th>
                             <th scope="col">ocean_proximity</th>
                             <th scope="col">median_house_value</th>
-                        </tr>
+                        </tr> -->
                     </thead>
-                    <tbody id="table_body">
+                    <tbody id="sample_table_body">
                         <!-- Sample data will be populated here using JavaScript -->
                     </tbody>
                 </table>
@@ -46,11 +51,17 @@
         <!-- Query Result Table -->
         <div class="shadow-lg p-3 mb-5 bg-white rounded">
             <h3>Query Result</h3>
-            {% if request.session.query_error %}
+            {% if request.session.query_alert %}
                 <div class="alert alert-warning" role="alert">
-                    {{ request.session.query_error }}
+                    {{ request.session.query_alert }}
                 </div>
             {% endif %}
+            {% if request.session.query_error %}
+            <div class="alert alert-danger" role="alert">
+              {{ request.session.query_error }}
+            </div>
+            {% endif %}
+
             <div class="table-responsive">
                 <table class="table table-bordered table-striped">
                     <thead id="Query_result_header">
@@ -79,51 +90,70 @@
 <!-- JavaScript to populate Sample Data Table and Query Result Table -->
 <script>
 
-  document.addEventListener("DOMContentLoaded", function () {
-    const queryInput = document.getElementById("query");
-    const submitButton = document.querySelector("button[type='submit']");
 
-    queryInput.addEventListener("input", function () {
-        const query = queryInput.value.toLowerCase();
-        const invalidKeywords = ["drop", "update", "delete", "remove"];
 
-        for (const keyword of invalidKeywords) {
-            if (query.includes(keyword)) {
-                submitButton.disabled = true;
-                alert("Error: Query contains invalid keyword '" + keyword + "'.");
-                return;
-            }
-        }
+  // function SampleData2() {
+  //   var table = document.getElementById("table_body");
+  // var request = new XMLHttpRequest();
+  // request.open("GET", "/getdata");
+  //   request.send();
+  //   request.onload = () => {
+  //     if (request.status == 200){
+  //       data = JSON.parse(request.response);
+  //       console.log(data);
+  //       console.log("Data refreshed successfully.")
+  //       var html = "";
+  //       for (let i = 0; i < data.length; i++) {
+          
+  //         html += "<tr>";
+  //         html += "<td>"+data[i].id+"</td>";
+  //         html += "<td>"+data[i].longitude+"</td>";
+  //         html += "<td>"+data[i].latitude+"</td>";
+  //         html += "<td>"+data[i].housing_median+"</td>";
+  //         html += "<td>"+data[i].total_rooms+"</td>";
+  //         html += "<td>"+data[i].total_bedrooms+"</td>";
+  //         html += "<td>"+data[i].population+"</td>";
+  //         html += "<td>"+data[i].households+"</td>";
+  //         html += "<td>"+data[i].median_income+"</td>";
+  //         html += "<td>"+data[i].ocean_proximity+"</td>";
+  //         html += "<td>"+data[i].median_house_value+"</td>";
+  //         html += "</tr>";
 
-        submitButton.disabled = false;
-    });
-});
+  //         }
+  //         table.innerHTML = html;
+  //     }
+  //   }
+  // }
+
 
   function SampleData() {
-    var table = document.getElementById("table_body");
+    var table = document.getElementById("sample_table_body");
+    var table_header = document.getElementById("sample_table_header");
   var request = new XMLHttpRequest();
-  request.open("GET", "/getdata");
+  request.open("GET", "/sample_data");
     request.send();
     request.onload = () => {
       if (request.status == 200){
         data = JSON.parse(request.response);
-        console.log(data);
+        var column_names = Object.keys(data[0]);
         console.log("Data refreshed successfully.")
-        var html = "";
+
+        // For result table Header
+        var html = "<tr>";
+        for (let i = 0; i < column_names.length; i++) {
+          html += "<th scope='col'>"+column_names[i]+"</th>";
+        }
+        html += "</tr>";
+        table_header.innerHTML = html;
+
+        // For Result Table body
+        html = "";
         for (let i = 0; i < data.length; i++) {
-          
+          var val = Object.values(data[i]);
           html += "<tr>";
-          html += "<td>"+data[i].id+"</td>";
-          html += "<td>"+data[i].longitude+"</td>";
-          html += "<td>"+data[i].latitude+"</td>";
-          html += "<td>"+data[i].housing_median+"</td>";
-          html += "<td>"+data[i].total_rooms+"</td>";
-          html += "<td>"+data[i].total_bedrooms+"</td>";
-          html += "<td>"+data[i].population+"</td>";
-          html += "<td>"+data[i].households+"</td>";
-          html += "<td>"+data[i].median_income+"</td>";
-          html += "<td>"+data[i].ocean_proximity+"</td>";
-          html += "<td>"+data[i].median_house_value+"</td>";
+            for (let i = 0; i < val.length; i++) {
+              html += "<td>"+val[i]+"</td>";
+            }
           html += "</tr>";
 
           }
@@ -167,8 +197,21 @@
       }
     }
   }
+
+  // Function to reload the page once
+  function reloadOnce() {
+    // Reload the page
+    location.reload();
+
+    // Remove the event listener to prevent further reloads
+    window.removeEventListener('load', reloadOnce);
+}
+
+var count = true;
   SampleData()
   QueryResult()
+  
+
 
 </script>
 

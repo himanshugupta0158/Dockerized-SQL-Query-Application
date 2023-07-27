@@ -136,14 +136,15 @@ class homepage(View):
         return super().dispatch(*args, **kwargs)
 
     def get(self, request):
-        data = HousePricing.objects.all()
-        return render(request, "homepage.html", {"data": data[:10]})
+        # data = HousePricing.objects.all()
+        # return render(request, "homepage.html", {"data": data[:10]})
+        return render(request, "homepage.html") 
 
 
-class getdata(View):
-    def get(self, request):
-        data = HousePricing.objects.all().values()
-        return JsonResponse(list(data[:10]), safe=False)
+# class getdata(View):
+#     def get(self, request):
+#         data = HousePricing.objects.all().values()
+#         return JsonResponse(list(data[:10]), safe=False)
 
 
 class sendQuery(View):
@@ -153,15 +154,84 @@ class sendQuery(View):
     # @csrf_exempt
     def post(self, request):
         query = request.POST.get("query")
+        user = self.request.user
         if "app_housepricing" in query :
             request.session["query"] = str(query)
             request.session["query_error"] = ""
+            request.session["query_alert"] = ""
         else:
-            request.session["query_error"] = "Use correct table name for query : '"+str(query)+"'"
+            request.session["query_alert"] = "Use correct table name for query : '"+str(query)+"'"
+            request.session["query_error"] = ""
             request.session["query"] = ""
+        
+
+        staff_level = ["Create","INSERT","Update", "Alter"]
+        admin_level = ["Delete","Drop","Remove", "Truncate", "Grant", "Revoke","@"]
+        query_lst = [str(i).capitalize() for i in str(query).split(" ")]
+        print(query_lst)
+        is_staff_lvl = False
+        is_admin_lvl = False
+
+        for i in staff_level:
+            if i in query_lst:
+                is_staff_lvl = True
+                print("Staff True")
+                break
+
+        if is_staff_lvl:
+            for i in admin_level:
+                if i in query_lst:
+                    is_admin_lvl = True
+                    break
+
+        if is_staff_lvl:
+            if user.is_staff == False :
+                request.session["query_error"] = "Permission Error : You Do not have access to Create, Add, Update or Alter table data"
+                request.session["query_alert"] = ""
+                request.session["query"] = ""
+                # return render(request, "homepage.html", {"error" : "Permission Error : You Do not have access to Create, Add, Update or Alter table data"})
+
+        if is_admin_lvl :
+            if user.is_superuser == False :
+                request.session["query_error"] = "Permission Error : You Do not have access to Delete, Remove or do User Privilages queries to table data"
+                request.session["query_alert"] = ""
+                request.session["query"] = ""
+                # return render(request, "homepage.html", {"error" : "Permission Error : You Do not have access to Delete, Remove or do User Privilages queries to table data"})
+
         return redirect("homepage")
 
 
+
+class GetSampleData(View):
+    def get(self, request):
+        try:
+            query = "select * from app_housepricing limit 10;"
+        except:
+            return JsonResponse({"error": "No Query"}, safe=False)
+        cursor = connection.cursor()
+        query_data = []
+        if not query or query == None or query == "":
+            return JsonResponse({"error": "No Query"}, safe=False)
+        try:
+            cursor.execute(query)
+            data = cursor.fetchall()
+            column_name = []
+            for row in cursor.description:
+                column_name.append(str(row.name))
+                
+            for row in data:
+                d = dict()
+                for i in range(len(column_name)):
+                    d[str(column_name[i])] = row[i]
+                query_data.append(d)
+            return JsonResponse(query_data, safe=False)
+        except Exception as e:
+            print("Error occurred:", str(e))
+            request.session["sample_query_error"] = str(e)
+            # request.session["query_error"] = ""
+            cursor.close
+            return JsonResponse({"error": "Unsuccessful Query"}, safe=False)
+        
 class QueryResult(View):
     def get(self, request):
         try:
@@ -186,5 +256,8 @@ class QueryResult(View):
                 query_data.append(d)
             return JsonResponse(query_data, safe=False)
         except Exception as e:
+            print("Error occurred:", str(e))
+            request.session["query_alert"] = str(e)
+            # request.session["query_error"] = ""
             cursor.close
             return JsonResponse({"error": "Unsuccessful Query"}, safe=False)
