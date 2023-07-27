@@ -13,9 +13,8 @@ docker build .
 ```
 docker-compose up
 ```
-```
-contrl + C 
-```
+- Now, use contrl + C to stop running container (for windows)
+
 - To execute postgresql database related command to create database which will be used in project
 ```
 docker-compose exec db psql -U postgres -c "CREATE DATABASE sheeban;"
