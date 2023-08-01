@@ -2,7 +2,7 @@ from django.urls import path
 from .views import SavingData, SignupView, homepage, sendQuery, QueryResult, LoginView, LogoutView, GetSampleData
 
 urlpatterns = [
-    path('save_csv_data/',SavingData), # Saving data into database model using CSV file from kaggle
+    path('save_db_data',SavingData, name="save_db_data"), # Saving data into database model using CSV file from kaggle
     path('',homepage.as_view(), name="homepage"),
     # path('getdata',getdata.as_view(), name="getdata"),
     path('query',sendQuery.as_view(), name="query"),

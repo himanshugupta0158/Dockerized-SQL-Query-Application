@@ -6,7 +6,12 @@
     <div class="container mt-4">
         <!-- Sample Data Table -->
         <div class="shadow-lg p-3 mb-5 bg-white rounded">
+          <div class="d-flex justify-content-between mb-2">
             <h3>Sample Data</h3>
+            {% if user.is_authenticated and user.is_superuser %}
+            <button class="d-flex justify-content-end btn btn-secondary" id="loadButton" onclick="Load_Data()">Load Data</button>
+            {% endif %}
+          </div>
             <div class="table-responsive">
               {% if request.session.sample_query_error %}
               <div class="alert alert-warning" role="alert">
@@ -41,7 +46,7 @@
             <form action="{% url 'query' %}" method="post">
                 {% csrf_token %}
                 <div class="form-group">
-                    <label for="query">Enter Your Query For Table <b>app_housepricing</b></label>
+                    <label for="query">Enter Your Query For Table <b>app_housepricing</b> or <b>app_countries_info</b></label>
                     <input type="text" class="form-control" id="query" name="query" style="padding-bottom: 60px;" value="{{ request.session.query }}" required>
                 </div>
                 <button class="btn btn-primary" type="submit">Run Query</button>
@@ -85,6 +90,32 @@
     table thead th {
         white-space: nowrap;
     }
+    .loader-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent black background */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999; /* Ensure the loader is above other elements */
+    }
+
+    .loader {
+      border: 4px solid #f3f3f3; /* Light grey */
+      border-top: 4px solid #3498db; /* Blue */
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 2s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
 </style>
 
 <!-- JavaScript to populate Sample Data Table and Query Result Table -->
@@ -124,6 +155,67 @@
   //     }
   //   }
   // }
+
+  function Load_Data() {
+      // Create a new XMLHttpRequest object
+      var request = new XMLHttpRequest();
+
+      // Start loader
+      showLoader();
+
+      // Configure the GET request
+      request.open('GET', '/save_db_data', true);
+
+      // Set up a callback function for a successful request
+      request.onload = function() {
+        hideLoader();
+        var homePageUrl = "/"; // The URL of your home page (e.g., / or /home/)
+
+        // Redirect to the home page URL
+        window.location.href = homePageUrl;
+        if (request.status >= 200 && request.status < 400) {
+          // Request was successful
+          var response = JSON.parse(request.responseText);
+          // Process the response data here (e.g., display or manipulate data)
+          // alert('Request successful!\nData received: ' + JSON.stringify(response));
+        } else {
+          // Request was unsuccessful (e.g., 404, 500, etc.)
+          alert('Error: Request failed with status ' + request.status);
+        }
+      };
+
+      // Set up a callback function for handling errors
+      request.onerror = function() {
+        // Error occurred during the request
+        alert('Error: There was a network error or the request could not be completed.');
+      };
+
+      // Send the GET request
+      request.send();
+    }
+
+function showLoader() {
+  // Create the loader container and loader element
+  const loaderContainer = document.createElement('div');
+  loaderContainer.classList.add('loader-container');
+
+  const loader = document.createElement('div');
+  loader.classList.add('loader');
+
+  // Append the loader to the container
+  loaderContainer.appendChild(loader);
+
+  // Append the loader container to the body
+  document.body.appendChild(loaderContainer);
+}
+
+function hideLoader() {
+  // Remove the loader container from the body
+  const loaderContainer = document.querySelector('.loader-container');
+  if (loaderContainer) {
+    loaderContainer.remove();
+  }
+}
 
 
   function SampleData() {

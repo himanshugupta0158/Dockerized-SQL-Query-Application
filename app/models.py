@@ -13,3 +13,10 @@ class HousePricing(models.Model):
     median_income = models.DecimalField(decimal_places=5, max_digits=10)
     ocean_proximity = models.CharField(max_length=100)
     median_house_value = models.IntegerField()
+
+class Countries_Info(models.Model):
+    country = models.CharField(max_length=100)
+    capital = models.CharField(max_length=100)
+    latitude = models.DecimalField(decimal_places=5, max_digits=10)
+    longitude = models.DecimalField(decimal_places=5, max_digits=10)
+    area = models.IntegerField()

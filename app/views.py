@@ -7,8 +7,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.contrib.auth.models import User
-from .models import HousePricing
-import csv
+from .models import HousePricing, Countries_Info
+import csv, json
 from decimal import Decimal, InvalidOperation
 
 
@@ -57,6 +57,48 @@ def fetch_data_from_csv(filename):
     return data
 
 
+def save_countries_data():
+    with open("countries_data.json", "r") as json_file:
+        countries_data = json.load(json_file)
+
+    data_saved_counter = 0
+    none_value_error_counter = 0
+
+    for data in countries_data:
+        try:
+            country = data.get("country")
+            capital = data.get("capital")
+            latitude = data.get("latitude")
+            longitude = data.get("longitude")
+            area = data.get("area")
+
+            # Handling missing or None values with default values based on data types
+            country = country or "Unknown"
+            capital = capital or "Unknown"
+            latitude = Decimal(latitude) if latitude is not None else Decimal(0)
+            longitude = Decimal(longitude) if longitude is not None else Decimal(0)
+            area = int(area) if area is not None else 0
+
+            # Create a new Countries_Info object and save it to the database
+            Countries_Info.objects.create(
+                country=country,
+                capital=capital,
+                latitude=latitude,
+                longitude=longitude,
+                area=area
+            )
+            data_saved_counter += 1
+
+        except (KeyError, ValueError, TypeError) as e:
+            none_value_error_counter += 1
+            print(f"Error processing data: {e}")
+
+    response_message = f"{data_saved_counter} records saved. " \
+                       f"{none_value_error_counter} records had NoneType or None value errors."
+
+    # return HttpResponse(response_message)
+    return response_message
+
 def SavingData(request):
     csv_filename = "1553768847-housing.csv"
     csv_data = fetch_data_from_csv(csv_filename)
@@ -89,7 +131,12 @@ def SavingData(request):
             ocean_proximity=str(row[8]),
             median_house_value=row[9],
         )
-    return HttpResponse("Data Saved Successfully")
+    
+    data_save_response = "Data Saved Successfully <br> - HousePricing Data Saved. <br> - "+save_countries_data() 
+    
+
+    return HttpResponse(data_save_response)
+    # return redirect("homepage")
 
 
 class SignupView(View):
@@ -155,14 +202,9 @@ class sendQuery(View):
     def post(self, request):
         query = request.POST.get("query")
         user = self.request.user
-        if "app_housepricing" in query :
-            request.session["query"] = str(query)
-            request.session["query_error"] = ""
-            request.session["query_alert"] = ""
-        else:
-            request.session["query_alert"] = "Use correct table name for query : '"+str(query)+"'"
-            request.session["query_error"] = ""
-            request.session["query"] = ""
+        request.session["query"] = str(query)
+        request.session["query_error"] = ""
+        request.session["query_alert"] = ""
         
 
         staff_level = ["Create","INSERT","Update", "Alter"]
