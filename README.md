@@ -47,3 +47,28 @@ docker-compose up
 ```
 docker-compose down
 ```
+
+### To Update code (In Case, you have already created docker Image and NOw you want to update code in the docker Image) 
+```
+docker build .
+```
+or 
+- Below is for in case you put a specific name to docker image manually
+```
+docker build <image-name> .
+```
+- Now run docker django related commands, this will update any django code db related changes in django and db
+```
+docker-compose exec web python manage.py makemigrations
+```
+```
+docker-compose exec web python manage.py migrate
+```
+Now Run, Docker as Usual : 
+```
+docker-compose up
+```
+### Make sure to use below docker command after stop 
+```
+docker-compose down
+```
