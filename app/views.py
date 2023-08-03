@@ -1,6 +1,7 @@
 import csv
 import json
 from decimal import Decimal, InvalidOperation
+import random
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -143,6 +144,33 @@ def save_countries_data():
     return response_message
 
 
+# def insert_data_in_NYCCensusSociodata():
+#     # Generate and insert 500 or 1000 rows of sample data
+#     for _ in range(random.randint(500,1000)):  # Change to 1000 for 1000 rows
+#         data = {
+#             'tractid': str(random.randint(30000000000, 39999999999)),
+#             'transit_total': random.randint(500, 5000),
+#             'transit_private': random.randint(100, 1000),
+#             'transit_public': random.randint(300, 2000),
+#             'transit_walk': random.randint(10, 100),
+#             'transit_other': random.randint(0, 50),
+#             'transit_none': random.randint(0, 10),
+#             'transit_time_mins': random.uniform(10, 120),
+#             'family_count': random.randint(500, 5000),
+#             'family_income_median': random.randint(10000, 50000),
+#             'family_income_mean': random.randint(20000, 70000),
+#             'family_income_aggregate': random.randint(1000000, 1000000000),
+#             'edu_total': random.randint(1000, 10000),
+#             'edu_no_highschool_dipl': random.randint(100, 1000),
+#             'edu_highschool_dipl': random.randint(200, 1500),
+#             'edu_college_dipl': random.randint(100, 1000),
+#             'edu_graduate_dipl': random.randint(10, 100),
+#         }
+#         NYCCensusSociodata.objects.create(**data)
+
+#     return str("Data Successfully saved in NYCCensusSociodata Table")   
+
+
 def SavingData(request):
     """
     Save data to the database from a CSV file.
@@ -157,16 +185,20 @@ def SavingData(request):
     exist = False
     if HousePricing.objects.all().exists():
         exist = True
-        msg += "Data Already Exist : <br> - HousePricing"
+        msg += "Data Already Exist : \n - HousePricing"
     if Countries_Info.objects.all().exists():
         exist = True
-        msg += "<br>- Countries Info "
+        msg += "\n- Countries Info "
     if Country_Coorinates.objects.all().exists():
         exist = True
-        msg += "<br>- Countries Coordinates "
+        msg += "\n- Countries Coordinates "
+    # if NYCCensusSociodata.objects.all().exists():
+    #     exist = True
+    #     msg += "\n- NYCCensusSociodata "
     print(msg)
     if exist:
-        return HttpResponse(msg)
+        # return HttpResponse(msg)
+        return JsonResponse({"msg" : msg}, status=409)
 
     csv_filename = "data/1553768847-housing.csv"
     csv_data = fetch_data_from_csv(csv_filename)
@@ -206,12 +238,13 @@ def SavingData(request):
             median_house_value=row[9],
         )
 
+    msg1 = save_countries_data()
+    # msg2 = insert_data_in_NYCCensusSociodata()
     data_save_response = (
-        "Data Saved Successfully <br> - HousePricing Data Saved. <br> - "
-        + save_countries_data()
+        "Data Saved Successfully \n - HousePricing Data Saved. \n - " + msg1
     )
 
-    return HttpResponse(data_save_response)
+    return JsonResponse({"msg" : data_save_response}, status=200)
     # return redirect("homepage")
 
 
@@ -480,6 +513,3 @@ class QueryResult(View):
             # request.session["query_error"] = ""
             cursor.close
             return JsonResponse({"error": "Unsuccessful Query"}, safe=False)
-
-def load_nyc_census_sociodata(request):
-    pass

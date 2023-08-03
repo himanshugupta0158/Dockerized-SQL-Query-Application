@@ -47,6 +47,7 @@
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="query">Enter Your Query For Table <b>app_housepricing</b> or <b>app_countries_info</b> or <b>app_country_coorinates</b></label>
+                    <!-- <div class="alert alert-warning" role="alert">Sample Query : <div style="color: #3498db;">select c1.country, c1.capital, c1.area , c2.latitude, c2.longitude from app_countries_info as c1,app_country_coorinates as c2  where c1.id = c2.country_id;</div></div> -->
                     <input type="text" class="form-control" id="query" name="query" style="padding-bottom: 60px;" value="{{ request.session.query }}" required>
                 </div>
                 <button class="btn btn-primary" type="submit">Run Query</button>
@@ -170,15 +171,24 @@
       request.onload = function() {
         hideLoader();
         var homePageUrl = "/"; // The URL of your home page (e.g., / or /home/)
+        var response = JSON.parse(request.responseText);
+        // console.log(response["msg"]);
+        window.location.href = homePageUrl;
 
         // Redirect to the home page URL
-        window.location.href = homePageUrl;
-        if (request.status >= 200 && request.status < 400) {
+        if (request.status == 200 ) {
           // Request was successful
-          var response = JSON.parse(request.responseText);
           // Process the response data here (e.g., display or manipulate data)
-          // alert('Request successful!\nData received: ' + JSON.stringify(response));
-        } else {
+          // alert('Request successful! ' + response["msg"]);
+          console.log('Request successful! ' + response["msg"]);
+        } 
+        else if (request.status == 409 ){
+          // trigger on when status 409 = Data already exist (Conflict).
+          // alert(response["msg"]);
+          console.log(response["msg"]);
+        }
+        else {
+          // Process the response data here (e.g., display or manipulate data)
           // Request was unsuccessful (e.g., 404, 500, etc.)
           alert('Error: Request failed with status ' + request.status);
         }
