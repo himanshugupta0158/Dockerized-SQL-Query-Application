@@ -1,8 +1,12 @@
 from django.urls import path
-from .views import SavingData, SignupView, homepage, sendQuery, QueryResult, LoginView, LogoutView, GetSampleData
+
+from .views import (GetSampleData, LoginView, LogoutView, QueryResult,
+                    SavingData, SignupView, homepage, save_countries_data,
+                    sendQuery)
 
 urlpatterns = [
     path('save_db_data',SavingData, name="save_db_data"), # Saving data into database model using CSV file from kaggle
+    # path('save_countries',save_countries_data, name="save_countries"), # Saving data into database model using CSV file from kaggle
     path('',homepage.as_view(), name="homepage"),
     # path('getdata',getdata.as_view(), name="getdata"),
     path('query',sendQuery.as_view(), name="query"),
