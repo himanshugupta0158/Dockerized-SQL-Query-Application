@@ -68,12 +68,12 @@
             </div>
             {% endif %}
 
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped">
+            <div class="table-responsive table-wrapper-scroll-y my-custom-scrollbar" >
+                <table class="table table-bordered table-striped mb-0">
                     <thead id="Query_result_header">
                         <!-- Query result table header will be populated here using JavaScript -->
                     </thead>
-                    <tbody id="Query_result_body">
+                    <tbody id="Query_result_body" >
                         <!-- Query result table body will be populated here using JavaScript -->
                     </tbody>
                 </table>
@@ -91,6 +91,16 @@
     table thead th {
         white-space: nowrap;
     }
+    /* ##########Scroll Bar table ############## */
+    .my-custom-scrollbar {
+      position: relative;
+      height: 500px;
+      overflow: auto;
+    }
+    .table-wrapper-scroll-y {
+      display: block;
+    }
+    /* ######################################### */
     .loader-container {
       position: fixed;
       top: 0;

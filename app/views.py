@@ -513,3 +513,59 @@ class QueryResult(View):
             # request.session["query_error"] = ""
             cursor.close
             return JsonResponse({"error": "Unsuccessful Query"}, safe=False)
+
+
+class Get_All_Country_Data(View):
+    """
+    GET API to retrieve all country data.
+
+    Returns:
+    - JsonResponse: JSON response containing all country data.
+    """
+
+    def get(self, request):
+            countries = Countries_Info.objects.all()
+            data = []
+            for country_info in countries:
+                country_data = {
+                    'country': country_info.country,
+                    'capital': country_info.capital,
+                    'area': country_info.area,
+                    'coordinates': []
+                }
+                coordinates = Country_Coorinates.objects.filter(country=country_info)
+                for coordinate in coordinates:
+                    country_data['coordinates'].append([coordinate.latitude, coordinate.longitude])
+                data.append(country_data)
+
+            return JsonResponse(data, safe=False)
+
+
+class Get_Country_Data(View):
+    """
+    GET API to retrieve specific country data based on the country name.
+
+    Parameters passed in URL:
+    - name (str): The name of the country.
+
+    Returns:
+    - JsonResponse: JSON response containing specific country data.
+    """
+
+    def get(self, request, name):
+        try:
+            country_info = Countries_Info.objects.get(country=name)
+        except Countries_Info.DoesNotExist:
+            return JsonResponse({'error': 'Country not found'}, status=404)
+
+        country_data = {
+            'country': country_info.country,
+            'capital': country_info.capital,
+            'area': country_info.area,
+            'coordinates': []
+        }
+        coordinates = Country_Coorinates.objects.filter(country=country_info)
+        for coordinate in coordinates:
+            country_data['coordinates'].append([coordinate.latitude, coordinate.longitude])
+
+        return JsonResponse(country_data, safe=False)

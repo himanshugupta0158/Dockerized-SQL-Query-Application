@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views import (
-    GetSampleData, LoginView, LogoutView, QueryResult, SavingData, SignupView, Homepage, save_countries_data, sendQuery
+    Get_All_Country_Data, GetSampleData, LoginView, LogoutView, QueryResult, SavingData, SignupView, Homepage, save_countries_data, sendQuery, Get_Country_Data
 )
 
 urlpatterns = [
@@ -10,6 +10,10 @@ urlpatterns = [
 
     # URL to save countries data only 
     # path('save_countries',save_countries_data, name="save_countries"),
+    
+    # URL to get countries related data both Get and Post request
+    path('get_all_country_data',Get_All_Country_Data.as_view(), name="get_country_data"),
+    path('get_country_data/<str:name>',Get_Country_Data.as_view(), name="get_country_data"),
     
     # Homepage URL
     path('', Homepage.as_view(), name="homepage"),
