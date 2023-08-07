@@ -1,5 +1,4 @@
 from django.db import models
-from django_jsonform.models.fields import ArrayField
 
 
 # HousePricing model to store information related to house pricing
