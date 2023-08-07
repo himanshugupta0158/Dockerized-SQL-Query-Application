@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+
+        <!-- Popup Container -->
+        <div class="popup-container" id="popupContainer">
+            <div class="popup-content">
+                <span class="material-symbols-outlined close-button" onclick="closePopup()">
+                    close
+                    </span>
+                <h2>Popup Content</h2>
+                <p>This is the content of the popup box.</p>
+                
+                <!-- Form -->
+                <form>
+                    <div class="form-group">
+                        <label for="fileInput">File Input</label>
+                        <input type="file" class="form-control" id="fileInput">
+                    </div>
+                    <div class="form-group">
+                        <label for="textInput">Text Input (Dropdown)</label>
+                        <select class="form-control" id="textInput">
+                            <option value="option1">Option 1</option>
+                            <option value="option2">Option 2</option>
+                            <option value="option3">Option 3</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+
+
+        
+        <!-- Sample Data Table -->
+        <div class="shadow-lg p-3 mb-5 bg-white rounded">
+
+
+          <div class="d-flex justify-content-between mb-2">
+            <h3>Sample Data</h3>
+            {% if user.is_authenticated and user.is_superuser %}
+            <button class="d-flex justify-content-end btn btn-secondary" id="loadButton" onclick="Load_Data()">Load Data</button>
+            {% endif %}
+            <button class="btn btn-primary" id="openPopupButton">Open Popup</button>
+        </div>
+
+            <div class="table-responsive">
+              {% if request.session.sample_query_error %}
+              <div class="alert alert-warning" role="alert">
+                  {{ request.session.sample_query_error }}
+              </div>
+              {% endif %}
+                <table class="table table-bordered table-striped">
+                    <thead id="sample_table_header">
+                    </thead>
+                    <tbody id="sample_table_body">
+                        <!-- Sample data will be populated here using JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- Query Form -->
+        <div class="shadow-lg p-3 mb-5 bg-white rounded">
+            <form action="{% url 'query' %}" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="query">Enter Your Query For Table <b>app_housepricing</b> or <b>app_countries_info</b> or <b>app_country_coorinates</b></label>
+                    <!-- <div class="alert alert-warning" role="alert">Sample Query : <div style="color: #3498db;">select c1.country, c1.capital, c1.area , c2.latitude, c2.longitude from app_countries_info as c1,app_country_coorinates as c2  where c1.id = c2.country_id;</div></div> -->
+                    <input type="text" class="form-control" id="query" name="query" style="padding-bottom: 60px;" value="{{ request.session.query }}" required>
+                </div>
+                <button class="btn btn-primary" type="submit">Run Query</button>
+            </form>
+        </div>
+
+        <!-- Query Result Table -->
+        <div class="shadow-lg p-3 mb-5 bg-white rounded">
+            <h3>Query Result</h3>
+            {% if request.session.query_alert %}
+                <div class="alert alert-warning" role="alert">
+                    {{ request.session.query_alert }}
+                </div>
+            {% endif %}
+            {% if request.session.query_error %}
+            <div class="alert alert-danger" role="alert">
+              {{ request.session.query_error }}
+            </div>
+            {% endif %}
+
+            <div class="table-responsive table-wrapper-scroll-y my-custom-scrollbar" >
+                <table class="table table-bordered table-striped mb-0">
+                    <thead id="Query_result_header">
+                        <!-- Query result table header will be populated here using JavaScript -->
+                    </thead>
+                    <tbody id="Query_result_body" >
+                        <!-- Query result table body will be populated here using JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}
