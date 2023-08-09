@@ -1,0 +1,24 @@
+
+{% extends 'base.html' %}
+
+{% block title %}SQL Dumping{% endblock %}
+
+{% block content %}
+ <!-- Form -->
+ <h2>Upload SQL Data</h2>
+{% if msg %}
+<div class="alert alert-warning" role="alert">{{msg}}</div>
+{% else %}
+<div class="alert alert-warning" role="alert">Make sure To upload Respective files mentioned above them as Label.</div>
+{% endif %}
+
+ <form enctype="multipart/form-data" action="/sql_dumping/" method="post">
+    {% csrf_token %}
+    <div class="form-group" >
+        <label for="fileInput">.sql File Input</label>
+        <input type="file" name="sql_file_input" class="form-control" id="fileInput" required>
+    </div>
+    <button type="submit" class="btn btn-primary" style="margin: 0 0 0 483px;">Submit Data</button>
+</form>
+
+{% endblock %}

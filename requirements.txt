@@ -142,4 +142,4 @@ pyproj
 pandas
 numpy
 matplotlib
-# psycopg2
+pyshp

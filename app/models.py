@@ -1,5 +1,5 @@
 from django.db import models
-
+from random import randint
 
 # HousePricing model to store information related to house pricing
 class HousePricing(models.Model):
@@ -27,6 +27,43 @@ class Country_Coorinates(models.Model):
     country = models.ForeignKey(Countries_Info, on_delete=models.CASCADE)
     latitude = models.DecimalField(decimal_places=5, max_digits=10)
     longitude = models.DecimalField(decimal_places=5, max_digits=10)
+
+
+def RandomFolder_Name():
+    return "Spatial_Files" + str(randint(10000,99999))
+
+
+class UploadFileData(models.Model):
+    folder_name = RandomFolder_Name()
+    dbf_file = models.FileField(upload_to=folder_name)
+    shp_file = models.FileField(upload_to=folder_name)
+    shx_file = models.FileField(upload_to=folder_name)
+    database_name = models.CharField(max_length=500)
+    is_loaded = models.BooleanField(default=False)
+
+
+class UploadedSQLData(models.Model):
+    sql_file = models.FileField(upload_to="sql_data")
+    is_loaded = models.BooleanField(default=False)
+
+
+class NycData(models.Model):
+    BLKID = models.CharField(max_length=50)
+    POPN_TOTAL = models.IntegerField()
+    POPN_WHITE = models.IntegerField()
+    POPN_BLACK = models.IntegerField()
+    POPN_NATIV = models.IntegerField()
+    POPN_ASIAN = models.IntegerField()
+    POPN_OTHER = models.IntegerField()
+    BORONAME = models.CharField(max_length=150)
+
+class Nyc_Coordinates(models.Model):
+    nyc_data = models.ForeignKey(NycData, on_delete=models.CASCADE)
+    x_coord = models.DecimalField(decimal_places=20, max_digits=30)
+    y_coord = models.DecimalField(decimal_places=20, max_digits=30)
+
+
+
 
 # class NYCCensusSociodata(models.Model):
 #     tractid = models.CharField(max_length=50)

@@ -2,6 +2,7 @@ import csv
 import json
 from decimal import Decimal, InvalidOperation
 import random
+from django.conf import Settings, settings
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -12,9 +13,11 @@ from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
+import psycopg2
 
-from .models import Countries_Info, Country_Coorinates, HousePricing
-
+from .models import Countries_Info, Country_Coorinates, HousePricing, Nyc_Coordinates, NycData, UploadFileData, UploadedSQLData
+from .shp_shx_extraction import shp_shx_data_extraction
+from .sql_loading_script import Run_SQL_Script
 
 def assign_value_based_on_data_type(data_type):
     """
@@ -337,6 +340,54 @@ class LogoutView(View):
         )  # Replace 'home' with the URL name of your home page
 
 
+def DbTableList():
+    """
+    Functions Working : 
+    # This function retrieves a list of user tables from a PostgreSQL database's 'public' schema.
+    # It filters out specific system-related table names.
+    # The function doesn't take any explicit input parameters.
+    # It returns a list containing the names of user tables and a status indicator (1 for success, 0 for failure).
+    """
+    
+    try:
+        # Create a cursor for database operations
+        cursor = connection.cursor()
+
+        # SQL query to fetch a list of tables in the 'public' schema
+        query = """
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_schema = 'public';
+        """
+        cursor.execute(query)
+        tables = cursor.fetchall()
+
+        # Initialize an empty list to store names of user tables
+        db_tables = []
+
+        # Iterate through the fetched tables
+        for table in tables:
+            # Exclude certain table names that are likely system-related
+            if "django" in str(table[0]) or "auth" in str(table[0]) or "app_uploadedsqldata" in str(table[0]) or "app_shapefiledata" in str(table[0]) or "app_uploadfiledata" in str(table[0]):
+                continue
+            db_tables.append(table[0])  # Add the table name to the list
+
+        # Commit the transaction to the database
+        connection.commit()
+
+        # Close the cursor if the database connection is open
+        if connection:
+            cursor.close()
+
+        # Return a list of user tables and a success indicator
+        return [db_tables, 1]
+
+    except (Exception, psycopg2.Error) as error:
+        # If an exception occurs, print an error message and return an error indicator
+        print("Error:", error)
+        return [error, 0]
+
+
 class Homepage(View):
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
@@ -352,7 +403,7 @@ class Homepage(View):
         """
         return super().dispatch(*args, **kwargs)
 
-    def get(self, request):
+    def get(self, request, table_name=None):
         """
         Render the homepage.html template for GET requests.
 
@@ -361,7 +412,18 @@ class Homepage(View):
         """
         # data = HousePricing.objects.all()
         # return render(request, "homepage.html", {"data": data[:10]})
-        return render(request, "homepage.html")
+        print(table_name)
+        if table_name :
+            print(table_name)
+            request.session["Sample_table_name"] = str(table_name)
+        else:
+            request.session["Sample_table_name"] = "app_housepricing"
+
+        response = DbTableList()
+        if response[1]:
+            return render(request, "homepage.html", {"table_list" : response[0]})
+        else:
+            return render(request, "homepage.html")
 
 
 class sendQuery(View):
@@ -451,7 +513,8 @@ class GetSampleData(View):
         Returns:
             JsonResponse: JSON response containing sample data fetched from the database.
         """
-        query = "select * from app_housepricing limit 10;"
+        table_name = str(request.session['Sample_table_name'])
+        query = f"select * from {table_name} limit 10;"
         cursor = connection.cursor()
         query_data = []
         try:
@@ -513,6 +576,223 @@ class QueryResult(View):
             # request.session["query_error"] = ""
             cursor.close
             return JsonResponse({"error": "Unsuccessful Query"}, safe=False)
+
+
+
+class PostFilesData(View):
+
+    def get(self, request):
+        """
+        Handles HTTP GET requests for the PostFilesData view.
+
+        Parameters:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            HttpResponse: Renders the 'upload.html' template.
+        """
+        return render(request, "upload.html")
+
+    def post(self, request):
+        """
+        Handles HTTP POST requests for the PostFilesData view.
+
+        Parameters:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            HttpResponse: Redirects to the 'load_shape_data' view after processing.
+        """
+        # Retrieve uploaded files and form data from the request
+        dbf_file = request.FILES.get("dbf_file_input")
+        shp_file = request.FILES.get("shp_file_input")
+        shx_file = request.FILES.get("shx_file_input")
+        db_selected = request.POST.get("db_selected")
+
+        # print(request.FILES)
+        
+        # Create an UploadFileData object and save it to the database
+        data = UploadFileData(
+            dbf_file = dbf_file,
+            shp_file = shp_file,
+            shx_file = shx_file,
+            database_name = db_selected
+        )
+
+        data.save()
+
+        # Store the ID of the uploaded shape data in the session
+        request.session["shape_data_id_to_load_data"] = int(data.id)
+        
+        print(data)
+
+        response = dict({
+            "shp_file" : data.shp_file,
+            "shx_file" : data.shx_file,
+            "database_name" : data.database_name
+        })
+        print(response)
+        return redirect("load_shape_data")
+
+
+def LoadShapeData(request):
+    """
+    Working : 
+    # This function loads shape data from SHP and SHX files into the database.
+    # It expects a session key "shape_data_id_to_load_data" to be set with the ID of the shape data to load.
+    # The function iterates through the extracted features, creates NycData and Nyc_Coordinates objects,
+    # and marks the shape data as loaded.
+    # After processing, the function redirects to the "homepage".
+    """
+    try :
+        # Extract the shape data's ID from the session and remove it from the session
+        id = int(request.session["shape_data_id_to_load_data"])
+        del request.session["shape_data_id_to_load_data"]
+
+        # Retrieve the shape data object based on the extracted ID
+        shape_data = UploadFileData.objects.get(id=id)
+
+        # Define paths to the SHP and SHX files
+        shp_file_path = "media/" + str(shape_data.shp_file)
+        shx_file_path = "media/" + str(shape_data.shx_file)
+
+        # Extract data from SHP and SHX files
+        datas = shp_shx_data_extraction(shp_file_path=shp_file_path, shx_file_path=shx_file_path)
+
+        # Iterate through extracted features and store data in the database
+        for data in datas["features"]:
+
+            # Create a new NycData object with extracted properties
+            nyc_data = NycData.objects.create(
+                BLKID = str(data["properties"]["BLKID"]),
+                POPN_TOTAL = int(data["properties"]["POPN_TOTAL"]),
+                POPN_WHITE = int(data["properties"]["POPN_WHITE"]),
+                POPN_BLACK = int(data["properties"]["POPN_BLACK"]),
+                POPN_NATIV = int(data["properties"]["POPN_NATIV"]),
+                POPN_ASIAN = int(data["properties"]["POPN_ASIAN"]),
+                POPN_OTHER = int(data["properties"]["POPN_OTHER"]),
+                BORONAME = str(data["properties"]["BORONAME"])
+            )
+            # print(nyc_data)
+
+            # Iterate through coordinates and create Nyc_Coordinates objects
+            for coord in data["geometry"]["coordinates"][0]:
+                try:
+                    coord = list(coord)
+                    new_nyc_coord = Nyc_Coordinates(
+                        nyc_data = nyc_data,
+                        x_coord = coord[0],
+                        y_coord = coord[1]
+                    )
+                    new_nyc_coord.save()
+                except:
+                    coord = list(coord[0])
+                    new_nyc_coord = Nyc_Coordinates(
+                        nyc_data = nyc_data,
+                        x_coord = coord[0],
+                        y_coord = coord[1]
+                    )
+                    new_nyc_coord.save()
+
+                # print(coord)
+            # Mark the shape data as loaded and save changes
+            shape_data.is_loaded = True
+            shape_data.save()
+    except Exception as e:
+        print(f"Error : {e}")
+
+    # Redirect to the homepage after processing
+    return redirect("homepage")
+
+
+
+class SQLDumping(View):
+    """
+    WORKING : 
+    # This view class handles SQL dumping functionality in a Django web application.
+    # It supports both GET and POST HTTP methods.
+    # - For GET requests, it renders the 'sql_dumping.html' template.
+    # - For POST requests, it processes an uploaded SQL file, runs its script, updates the database accordingly,
+    #   and renders the 'sql_dumping.html' template with a message indicating the script execution result.
+    """
+
+    def get(self, request):
+        """
+        Handles HTTP GET requests for the SQLDumping view.
+        
+        Parameters:
+            request (HttpRequest): The HTTP request object.
+            
+        Returns:
+            HttpResponse: Renders the 'sql_dumping.html' template.
+        """
+        return render(request, "sql_dumping.html")
+    
+    def post(self, request):
+        """
+        Handles HTTP POST requests for the SQLDumping view.
+        
+        Parameters:
+            request (HttpRequest): The HTTP request object.
+            
+        Returns:
+            HttpResponse: Renders the 'sql_dumping.html' template with a message about the script execution.
+        """
+        # Retrieve the uploaded SQL file from the POST request
+        sql_file = request.FILES.get("sql_file_input")
+
+        # Create an UploadedSQLData object and get its associated data
+        data = UploadedSQLData.objects.get(id=UploadedSQLData.objects.create(sql_file=sql_file).id)
+        
+        # Define the path to the uploaded SQL file
+        sql_file_path = "media/" + str(data.sql_file)
+        
+        # Run the SQL script using a utility function
+        response = Run_SQL_Script(sql_file_path)
+        
+        # Print the response for debugging purposes
+        print(response)
+
+        # Update the 'is_loaded' attribute of the UploadedSQLData object if the script executed successfully
+        if response[1]:
+            data.is_loaded = True
+
+        # Render the 'sql_dumping.html' template with a message about the script execution
+        return render(request, "sql_dumping.html", {"msg": response[0]})
+
+
+
+""" ##################################### APIs ###############################################"""
+
+class Get_NYC_Data(View):
+    """
+    GET API to retrieve all NYC data.
+
+    Returns:
+    - JsonResponse: JSON response containing all country data.
+    """
+
+    def get(self, request):
+            nycs = NycData.objects.all()
+            data = []
+            for nyc_info in nycs:
+                nyc_data = {
+                    "BLKID" : nyc_info.BLKID, 
+                    "POPN_TOTAL" : nyc_info.POPN_TOTAL, 
+                    "POPN_WHITE" : nyc_info.POPN_WHITE, 
+                    "POPN_BLACK" : nyc_info.POPN_BLACK, 
+                    "POPN_NATIV" : nyc_info.POPN_NATIV, 
+                    "POPN_ASIAN" : nyc_info.POPN_ASIAN, 
+                    "POPN_OTHER" : nyc_info.POPN_OTHER, 
+                    "BORONAME" : nyc_info.BORONAME, 
+                    'coordinates': []
+                }
+                coordinates = Nyc_Coordinates.objects.filter(nyc_data=nyc_info)
+                for coordinate in coordinates:
+                    nyc_data['coordinates'].append([coordinate.x_coord, coordinate.y_coord])
+                data.append(nyc_data)
+
+            return JsonResponse(data, safe=False)
 
 
 class Get_All_Country_Data(View):
