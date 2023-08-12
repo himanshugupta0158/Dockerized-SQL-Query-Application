@@ -26,8 +26,10 @@
 
         <div  class="row border p-2 mb-2">
             {% for table_name in table_list %}
-                <form action="{% url 'load_sample_data' table_name %}" method="get" class="col-lg-3 col-md-5 col-sm-6 p-2">
-                    <input class="btn btn-outline-secondary" type="submit" value="{{table_name}}">
+                <form action="{% url 'homepage' %}" method="post" class="col-lg-3 col-md-5 col-sm-6 p-2">
+                    {% csrf_token %}
+                {% comment %} <form action="/{{table_name}}" method="get" class="col-lg-3 col-md-5 col-sm-6 p-2"> {% endcomment %}
+                    <input class="btn btn-outline-secondary" type="submit" value="{{table_name}}" name="Input_Table_Name">
                 </form>
             {% endfor %}
         </div>

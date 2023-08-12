@@ -15,6 +15,8 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 import psycopg2
 
+from rest_framework.views import APIView
+
 from .models import Countries_Info, Country_Coorinates, HousePricing, Nyc_Coordinates, NycData, UploadFileData, UploadedSQLData
 from .shp_shx_extraction import shp_shx_data_extraction
 from .sql_loading_script import Run_SQL_Script
@@ -423,7 +425,7 @@ class Homepage(View):
         """
         return super().dispatch(*args, **kwargs)
 
-    def get(self, request, table_name=None):
+    def get(self, request):
         """
         Render the homepage.html template for GET requests.
 
@@ -432,13 +434,23 @@ class Homepage(View):
         """
         # data = HousePricing.objects.all()
         # return render(request, "homepage.html", {"data": data[:10]})
-        print(table_name)
+
+        request.session["Sample_table_name"] = "app_housepricing"
+
+        response = DbTableList()
+        if response[1]:
+            return render(request, "homepage.html", {"table_list" : response[0]})
+        else:
+            return render(request, "homepage.html")
+        
+    def post(self, request):
+        table_name = request.POST.get("Input_Table_Name")
         if table_name :
             print(table_name)
             request.session["Sample_table_name"] = str(table_name)
         else:
             request.session["Sample_table_name"] = "app_housepricing"
-
+        
         response = DbTableList()
         if response[1]:
             return render(request, "homepage.html", {"table_list" : response[0]})
@@ -522,7 +534,8 @@ class sendQuery(View):
         return redirect("homepage")
 
 
-class GetSampleData(View):
+# class GetSampleData(View):
+class GetSampleData(APIView):
     def get(self, request):
         """
         Process the GET request to fetch sample data (10 Rows) from the database.
@@ -534,9 +547,8 @@ class GetSampleData(View):
             JsonResponse: JSON response containing sample data fetched from the database.
         """
         table_name = str(request.session.get('Sample_table_name'))
-        print(f"Table Name to show : {table_name}")
-        # query = f"select * from {table_name} limit 10;"
-        query = f"select * from app_housepricing limit 10;"
+        # print(f"Table Name to show : {table_name}")
+        query = f"select * from {table_name} limit 10;"
         cursor = connection.cursor()
         query_data = []
         try:
@@ -552,14 +564,13 @@ class GetSampleData(View):
                     d[str(column_name[i])] = row[i]
                 query_data.append(d)
             print(row)
-            print(query_data)
             return JsonResponse(query_data, safe=False)
         except Exception as e:
             print("Error occurred:", str(e))
             request.session["sample_query_error"] = str(e)
             # request.session["query_error"] = ""
             cursor.close
-            return JsonResponse({"error": "Unsuccessful Query"}, safe=False)
+            return JsonResponse({"error": f"Unsuccessful Query on table {table_name}"}, safe=False)
 
 
 class QueryResult(View):

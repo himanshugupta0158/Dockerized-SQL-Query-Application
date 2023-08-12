@@ -33,52 +33,52 @@
   //   }
   // }
 
-  function Load_Data() {
-    // Create a new XMLHttpRequest object
-    var request = new XMLHttpRequest();
+  // function Load_Data() {
+  //   // Create a new XMLHttpRequest object
+  //   var request = new XMLHttpRequest();
 
-    // Start loader
-    showLoader();
+  //   // Start loader
+  //   showLoader();
 
-    // Configure the GET request
-    request.open('GET', '/save_db_data', true);
+  //   // Configure the GET request
+  //   request.open('GET', '/save_db_data', true);
 
-    // Set up a callback function for a successful request
-    request.onload = function() {
-      hideLoader();
-      var homePageUrl = "/"; // The URL of your home page (e.g., / or /home/)
-      var response = JSON.parse(request.responseText);
-      // console.log(response["msg"]);
-      window.location.href = homePageUrl;
+  //   // Set up a callback function for a successful request
+  //   request.onload = function() {
+  //     hideLoader();
+  //     var homePageUrl = "/"; // The URL of your home page (e.g., / or /home/)
+  //     var response = JSON.parse(request.responseText);
+  //     // console.log(response["msg"]);
+  //     window.location.href = homePageUrl;
 
-      // Redirect to the home page URL
-      if (request.status == 200 ) {
-        // Request was successful
-        // Process the response data here (e.g., display or manipulate data)
-        // alert('Request successful! ' + response["msg"]);
-        console.log('Request successful! ' + response["msg"]);
-      } 
-      else if (request.status == 409 ){
-        // trigger on when status 409 = Data already exist (Conflict).
-        // alert(response["msg"]);
-        console.log(response["msg"]);
-      }
-      else {
-        // Process the response data here (e.g., display or manipulate data)
-        // Request was unsuccessful (e.g., 404, 500, etc.)
-        alert('Error: Request failed with status ' + request.status);
-      }
-    };
+  //     // Redirect to the home page URL
+  //     if (request.status == 200 ) {
+  //       // Request was successful
+  //       // Process the response data here (e.g., display or manipulate data)
+  //       // alert('Request successful! ' + response["msg"]);
+  //       console.log('Request successful! ' + response["msg"]);
+  //     } 
+  //     else if (request.status == 409 ){
+  //       // trigger on when status 409 = Data already exist (Conflict).
+  //       // alert(response["msg"]);
+  //       console.log(response["msg"]);
+  //     }
+  //     else {
+  //       // Process the response data here (e.g., display or manipulate data)
+  //       // Request was unsuccessful (e.g., 404, 500, etc.)
+  //       alert('Error: Request failed with status ' + request.status);
+  //     }
+  //   };
 
-    // Set up a callback function for handling errors
-    request.onerror = function() {
-      // Error occurred during the request
-      alert('Error: There was a network error or the request could not be completed.');
-    };
+  //   // Set up a callback function for handling errors
+  //   request.onerror = function() {
+  //     // Error occurred during the request
+  //     alert('Error: There was a network error or the request could not be completed.');
+  //   };
 
-    // Send the GET request
-    request.send();
-  }
+  //   // Send the GET request
+  //   request.send();
+  // }
 
 function showLoader() {
 // Create the loader container and loader element
@@ -176,16 +176,32 @@ request.open("GET", "/query_result");
   }
 }
 
-// Function to reload the page once
-function reloadOnce() {
-  // Reload the page
-  location.reload();
+// // Function to reload the page once
+// function reloadOnce() {
+//   // Reload the page
+//   location.reload();
 
-  // Remove the event listener to prevent further reloads
-  window.removeEventListener('load', reloadOnce);
-}
+//   // Remove the event listener to prevent further reloads
+//   window.removeEventListener('load', reloadOnce);
+// }
 
-var count = true;
-SampleData()
-QueryResult()
+// // Open Popup Button Click Event
+// document.getElementById("openPopupButton").addEventListener("click", function() {
+//   // Show the popup container
+//   document.getElementById("popupContainer").style.display = "flex";
+// });
 
+// // Close Popup Function
+// function closePopup() {
+//   // Hide the popup container
+//   document.getElementById("popupContainer").style.display = "none";
+// }
+
+SampleData();
+QueryResult();
+
+// function UpdateSampleData(){
+
+//   var selectedTable = this.value;
+//   window.location.href = "{% url 'load_sample_data' '' %}" + selectedTable;
+// }

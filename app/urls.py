@@ -23,7 +23,7 @@ urlpatterns = [
     
     # Homepage URL
     path('', Homepage.as_view(), name="homepage"),
-    path('<str:table_name>', Homepage.as_view(), name="load_sample_data"),
+    # path('<str:table_name>', Homepage.as_view(), name="load_sample_data"),
 
     # URL to execute a custom query and get the result
     path('query/', sendQuery.as_view(), name="query"),
