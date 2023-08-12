@@ -251,6 +251,26 @@ def SavingData(request):
     # return redirect("homepage")
 
 
+class CreateSuperUserView(View):
+    def get(self, request):
+        # Replace with your desired username, email, and password
+        username = "admin"
+        email = "admin@gmail.com"
+        password = "1234"
+
+        # Check if the superuser already exists
+        if User.objects.filter(username=username).exists():
+            print("Superuser already exists.")
+        else:
+            # Create the superuser
+            User.objects.create_superuser(
+                username=username, email=email, password=password
+            )
+            print("Superuser created successfully.")
+        return redirect("homepage")
+
+
+
 class SignupView(View):
     def get(self, request):
         """
@@ -513,8 +533,10 @@ class GetSampleData(View):
         Returns:
             JsonResponse: JSON response containing sample data fetched from the database.
         """
-        table_name = str(request.session['Sample_table_name'])
-        query = f"select * from {table_name} limit 10;"
+        table_name = str(request.session.get('Sample_table_name'))
+        print(f"Table Name to show : {table_name}")
+        # query = f"select * from {table_name} limit 10;"
+        query = f"select * from app_housepricing limit 10;"
         cursor = connection.cursor()
         query_data = []
         try:
@@ -529,6 +551,8 @@ class GetSampleData(View):
                 for i in range(len(column_name)):
                     d[str(column_name[i])] = row[i]
                 query_data.append(d)
+            print(row)
+            print(query_data)
             return JsonResponse(query_data, safe=False)
         except Exception as e:
             print("Error occurred:", str(e))

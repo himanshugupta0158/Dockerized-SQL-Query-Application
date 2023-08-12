@@ -1,13 +1,16 @@
 from django.urls import path
 
 from .views import (
-    Get_All_Country_Data, Get_NYC_Data, GetSampleData, LoadShapeData, LoginView, LogoutView, PostFilesData, QueryResult, SQLDumping, SavingData, SignupView, Homepage, save_countries_data, sendQuery, Get_Country_Data
+    CreateSuperUserView, Get_All_Country_Data, Get_NYC_Data, GetSampleData, LoadShapeData, LoginView, LogoutView, PostFilesData, QueryResult, SQLDumping, SavingData, SignupView, Homepage, save_countries_data, sendQuery, Get_Country_Data
 )
 
 urlpatterns = [
     # URL to save data into the database model using CSV file from Kaggle
     path('save_db_data/', SavingData, name="save_db_data"),
 
+    # URL to create super User
+    path('create_admin',CreateSuperUserView.as_view(), name="create_admin"),
+    
     # URL to save countries data only 
     # path('save_countries',save_countries_data, name="save_countries"),
 
