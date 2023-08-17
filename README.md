@@ -21,7 +21,7 @@ http://127.0.0.1:8000/create_admin
 - **Note** : All above Docker commonds will run runs python django server which is connect to db (postgresql).
 - Now everything is setup , let run docker container using below docker commands :
 
-### Now everything is setup for docker,so To run django in docker container follow below docker command, it will run project and you can check website "http://localhost:8000/" and to load data on db "http://127.0.0.1:8000/save_db_data" or you can click load_Sample_data when you login as admin.
+### Now everything is setup for docker,so To run django in docker container follow below docker command, it will run project and you can check website "http://127.0.0.1:8000/" and to load data on db "http://127.0.0.1:8000/save_db_data" or you can click load_Sample_data when you login as admin.
 ```
 docker-compose up
 ```
