@@ -29,15 +29,10 @@ class Country_Coorinates(models.Model):
     longitude = models.DecimalField(decimal_places=5, max_digits=10)
 
 
-def RandomFolder_Name():
-    return "Spatial_Files" + str(randint(10000,99999))
-
-
 class UploadFileData(models.Model):
-    folder_name = RandomFolder_Name()
-    dbf_file = models.FileField(upload_to=folder_name)
-    shp_file = models.FileField(upload_to=folder_name)
-    shx_file = models.FileField(upload_to=folder_name)
+    dbf_file = models.FileField(upload_to="Spatial_Files")
+    shp_file = models.FileField(upload_to="Spatial_Files")
+    shx_file = models.FileField(upload_to="Spatial_Files")
     database_name = models.CharField(max_length=500)
     is_loaded = models.BooleanField(default=False)
 

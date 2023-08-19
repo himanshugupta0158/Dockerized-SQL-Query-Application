@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # Install system dependencies for psycopg2 and other libraries
-RUN apt-get update \
+RUN apt-get update  && apt-get install -y apt-transport-https \
     && apt-get install -y libpq-dev gcc
 
 # Set work directory
