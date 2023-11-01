@@ -1,4 +1,5 @@
-# Sheeban-Wasi-Full-stack
+# Dockerized SQL Query Application
+- This *Dockerized SQL Query Application* with file fetching into db feature added..
 # django-docker Setup
 - As name suggest, this is Python Django web framework which runs on docker container.
 - There is two docker files named **Dockerfile** and **docker-compose.yml**
