@@ -4,7 +4,7 @@
 - As name suggest, this is Python Django web framework which runs on docker container.
 - There is two docker files named **Dockerfile** and **docker-compose.yml**
 - There is also django webapp which scrapes whatever URL you were provided in input field.
-- Docker Setup video link ```https://drive.google.com/file/d/1-KVKrA7lHxRSmmFyiAoQtTUtevU1ByMg/view?usp=sharing```
+- Docker Setup video link https://drive.google.com/file/d/1-KVKrA7lHxRSmmFyiAoQtTUtevU1ByMg/view?usp=sharing
 
 ### Commands needed to run :
 - GO to your project folder and run below to build docker first , this will add your project to docker and create web and database docker image
